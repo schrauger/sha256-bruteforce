@@ -108,9 +108,7 @@ function Form() {
             </h2>
             <form className={"form " + status} >
                 <div className='form-group'>
-                    <label htmlFor='modeInput'>                        
-                        <span>Brute Force</span>
-                    </label>
+                    <label htmlFor='modeBruteforce'>   
                     <input 
                         id="modeBruteforce"
                         type="radio" 
@@ -119,17 +117,24 @@ function Form() {
                         checked={mode === "bruteforce"}
                         onChange={handleInputChange}
                     />
+                                         
+                        <span>Brute Force</span>
+                    </label>
+                </div>
+                <div>
                     <label htmlFor='modeVerify'>
+                        <input 
+                            id="modeVerify"
+                            type="radio" 
+                            value="verify" 
+                            name="mode" 
+                            checked={mode === "verify"}
+                            onChange={handleInputChange}
+                        />
+                    
+                    
                         <span>Verify</span>
                     </label>
-                    <input 
-                        id="modeVerify"
-                        type="radio" 
-                        value="verify" 
-                        name="mode" 
-                        checked={mode === "verify"}
-                        onChange={handleInputChange}
-                    />
                 </div>
                 <div className='form-group'>
                     <label>
