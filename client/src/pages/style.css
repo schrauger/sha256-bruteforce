@@ -1,0 +1,30 @@
+form {
+    display: block;
+    padding: 20px;
+}
+
+input {
+    /* padding: 20px; */
+}
+
+label span{
+    margin: 10px;
+}
+
+form.unsubmitted {
+    background-color: rgb(219, 219, 219);
+}
+
+
+form.valid {
+    background-color: rgb(202, 255, 202);
+}
+
+form.invalid {
+    background-color: rgb(255, 185, 185);
+}
+
+form.calculating {
+    background-color: rgb(235, 255, 146);
+}
+
