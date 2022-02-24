@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { requestBruteforceHashResult, verifyHashProof } from '../utils/api';
 import './style.css';
 
+// @TODOS
+// * validate user input
+// * set a max difficulty to a sane amount
+// * prevent double submissions
+// * make it prettier
+
 function Form() {
     // Create state variables for the form fields
     // Initialize with default data
@@ -11,14 +17,17 @@ function Form() {
     const [status, setStatus] = useState('unsubmitted'); 
     const [mode, setMode] = useState('bruteforce');
 
+
+    // generic input handler for all inputs
     const handleInputChange = (e) => {
         const { target } = e;
         const inputName = target.name;
         const inputValue = target.value;
 
+
         if (inputName === 'textToHash') {
             setTextToHash(inputValue);
-            setStatus('unsubmitted')
+            setStatus('unsubmitted') // when the user changes any value, reset the form to 'unsubmitted'
         } else if (inputName === 'hashPrefixCount') {
             setHashPrefixCount(inputValue);
             setStatus('unsubmitted')
@@ -39,27 +48,22 @@ function Form() {
 
         setStatus('calculating');
 
-        
-        // if (!validateTextToHash(textToHash) || !textToHash) {
-        //     setErrorMessage('Message to be hashed is invalid.'); // not sure when any string would be invalid, since even an empty string will hash, but a validator is good in general
-        // }
-        // if (!validateHashPrefixCount(hashPrefixCount) || !hashPrefixCount) {
-        //     setErrorMessage('Specify the number of 0s required for the resulting hash prefix');
-        // }
-
         let requestFunction;
         let requestData;
+
+        // submit to two different backends, depending on the mode
         if (mode === 'bruteforce'){
             setCounter('');
-            requestFunction = requestBruteforceHashResult;
+            requestFunction = requestBruteforceHashResult; 
             requestData = {textToHash, hashPrefixCount};
         } else if (mode === 'verify') {
             requestFunction = verifyHashProof;
             requestData = {textToHash, hashPrefixCount, counter};
         }
         
-        requestFunction(requestData)
+        requestFunction(requestData) // send the POST request to the server for computation
         .then(async response => {
+            // when the server responds correctly, we can update our states based on the result
             const isJson = response.headers.get('content-type')?.includes('application/json'); // make sure we are getting json
             const data = isJson && await response.json();
 
@@ -86,54 +90,48 @@ function Form() {
             }
             
         })
+
+         // if the server fails, set it to invalid. in case the request times out or the server is unavailable.
         .catch(error => {
             console.error('There was an error!', error);
+            setStatus('invalid');
         })
-        // const getBruteforceHash = async (hashRequest) => {
-        //     try {
-        //         const res = await requestBruteforceHashResult(hashRequest);
-        //         if (!res.ok) {
-        //             throw new Error('Unable to find hash within 3,000,000 attempts'); // @TODO better error message. api could return max allowed attempts
-        //         }
-
-        //         const attemptCounter = await res.json();
-        //         setResult
-        //     } catch (err) {
-        //         console.error(err);
-        //     }
-        // };
-        // getBruteforceHash({textToHash, hashPrefixCount});
     }
 
 
-
+    // build up the entire form
     return (
         <div>
             <p>Sha256 Brute-force Service</p>
-            <form className={"form " + status}>
-                <div>
-                    <label>
-                        <input 
-                            type="radio" 
-                            value="bruteforce" 
-                            name="mode" 
-                            checked={mode === "bruteforce"}
-                            onChange={handleInputChange}
-                        />
+            <h2>
+                {mode === 'bruteforce' ? bruteforceMessage(status) : verifyMessage(status)}
+            </h2>
+            <form className={"form " + status} >
+                <div className='form-group'>
+                    <label htmlFor='modeInput'>                        
                         <span>Brute Force</span>
                     </label>
-                    <label>
-                        <input 
-                            type="radio" 
-                            value="verify" 
-                            name="mode" 
-                            checked={mode === "verify"}
-                            onChange={handleInputChange}
-                        />
+                    <input 
+                        id="modeBruteforce"
+                        type="radio" 
+                        value="bruteforce" 
+                        name="mode" 
+                        checked={mode === "bruteforce"}
+                        onChange={handleInputChange}
+                    />
+                    <label htmlFor='modeVerify'>
                         <span>Verify</span>
                     </label>
+                    <input 
+                        id="modeVerify"
+                        type="radio" 
+                        value="verify" 
+                        name="mode" 
+                        checked={mode === "verify"}
+                        onChange={handleInputChange}
+                    />
                 </div>
-                <div>
+                <div className='form-group'>
                     <label>
                         <input 
                             value={textToHash}
@@ -146,7 +144,7 @@ function Form() {
 
                     </label>
                 </div>
-                <div>
+                <div className='form-group'>
                     <label>
                         <input 
                             value={hashPrefixCount}
@@ -160,7 +158,7 @@ function Form() {
                                                 
                     </label>
                 </div>
-                <div>
+                <div className='form-group'>
                 
                     {mode === 'bruteforce' 
                     ?
@@ -169,11 +167,8 @@ function Form() {
                             ?
                             <span>Submit to calculate counter</span>
                             :
-                            <span>Counter: {counter}</span>
+                            <span>Counter: {counter ? counter : "Calculating"}</span>
                         )
-                        
-                        
-                    
                     :
                         <label>
                             <input
@@ -183,32 +178,65 @@ function Form() {
                             type="counter"
                             placeholder=""
                             readOnly={mode === 'bruteforce' ? true : false} 
-                            
                             />
                             <span>Counter</span>
 
                         </label>
                     }
-                </div>    
-                
-                 
-                <div>
+                </div>   
                 <button
                     type="button"
                     onClick={handleFormSubmit}
                 >
                     Submit
                 </button>
-                </div>
             </form>
-            {/* {errorMessage && (
-                <div>
-                    <p className="error-text">{errorMessage}</p>
-                </div>
-            )} */}
         </div>
 
     );
+}
+
+/**
+ * Returns a printable string based on the internal status - used for 'bruteforce' mode
+ * @param {*} status 
+ * @returns 
+ */
+function bruteforceMessage (status) {
+
+    switch (status) {
+        case 'unsubmitted':
+            return ('Submit the form to bruteforce the desired hash');
+        case 'calculating':
+            return ('Waiting for server calcultions');
+        case 'valid':
+            return ('Hash found!');
+        case 'invalid':
+            return ('Unable to bruteforce a hash with the requested parameters');
+        default :
+            return ('');
+    }
+}
+
+
+/**
+ * Returns a printable string based on the internal status - used for 'verify' mode
+ * @param {*} status 
+ * @returns 
+ */
+function verifyMessage (status) {
+
+    switch (status) {
+        case 'unsubmitted':
+            return ('Submit the form to verify proof');
+        case 'calculating':
+            return ('Waiting for server calcultions');
+        case 'valid':
+            return ('Hash verified!');
+        case 'invalid':
+            return ('Unable to verify the hash with the requested parameters');
+        default :
+            return ('');
+    }
 }
 
 export default Form;

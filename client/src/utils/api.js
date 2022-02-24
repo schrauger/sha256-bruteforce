@@ -1,3 +1,5 @@
+// two simple functions to POST to a couple api locations
+
 export const requestBruteforceHashResult = (hashRequest) => {
     return fetch('/find', {
         method: 'POST',
