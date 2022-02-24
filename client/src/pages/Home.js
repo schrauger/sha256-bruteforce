@@ -212,7 +212,7 @@ function bruteforceMessage (status) {
         case 'unsubmitted':
             return ('Submit the form to bruteforce the desired hash');
         case 'calculating':
-            return ('Waiting for server calcultions');
+            return ('Waiting for server calculations');
         case 'valid':
             return ('Hash found!');
         case 'invalid':
@@ -234,7 +234,7 @@ function verifyMessage (status) {
         case 'unsubmitted':
             return ('Submit the form to verify proof');
         case 'calculating':
-            return ('Waiting for server calcultions');
+            return ('Waiting for server calculations');
         case 'valid':
             return ('Hash verified!');
         case 'invalid':
